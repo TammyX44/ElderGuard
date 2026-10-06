@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Simulation Lab · ElderGuard{% endblock %}
+{% block content %}
+<header class="page-header simulation-header">
+  <div><span class="eyebrow">Controlled demonstration</span><h1>Simulation Lab</h1><p>Trigger one realistic vital event at a time and watch the monitoring agent, browser alert and Telegram escalation react.</p></div>
+  <div class="live-badge"><span class="pulse-dot"></span> SAFE SIMULATION MODE</div>
+</header>
+
+<div class="simulation-layout" data-simulation-page data-patient-id="{{ selected_patient.id }}">
+  <section class="simulation-control-column">
+    <article class="panel simulation-control-panel">
+      <div class="panel-heading"><div><span class="eyebrow">Step 1</span><h2>Select patient</h2></div><span class="sim-step-chip">DEMO</span></div>
+      <label class="field-label">Patient
+        <select id="simulation-patient-select" class="large-select">
+          {% for patient_id, patient in patients.items() %}<option value="{{ patient_id }}" {% if patient_id == selected_patient.id %}selected{% endif %}>{{ patient.name }} · {{ patient_id }} · {{ patient.room }}</option>{% endfor %}
+        </select>
+      </label>
+      <div class="selected-patient-strip">
+        <div><span id="sim-patient-id">{{ selected_patient.id }}</span><strong id="sim-patient-name">{{ selected_patient.name }}</strong><small id="sim-patient-meta">{{ selected_patient.age }} yrs · {{ selected_patient.room }}</small></div>
+        <span class="status-pill status-{{ snapshot.decision.status|lower }}" id="sim-overall-status">{{ snapshot.decision.status }}</span>
+      </div>
+    </article>
+
+    <article class="panel simulation-control-panel">
+      <div class="panel-heading"><div><span class="eyebrow">Step 2</span><h2>Choose event</h2></div></div>
+      <div class="scenario-grid" id="scenario-grid">
+        <button class="scenario-card active" data-scenario="heart_rate_spike"><span>HR</span><strong>Heart-rate spike</strong><small>Gradual rise in BPM</small></button>
+        <button class="scenario-card" data-scenario="low_oxygen"><span>O₂</span><strong>Low oxygen</strong><small>SpO₂ declines smoothly</small></button>
+        <button class="scenario-card" data-scenario="fever"><span>°C</span><strong>Temperature rise</strong><small>Simulated fever event</small></button>
+        <button class="scenario-card" data-scenario="bp_spike"><span>BP</span><strong>BP elevation</strong><small>Systolic + diastolic rise</small></button>
+        <button class="scenario-card scenario-wide" data-scenario="multi_vital"><span>!</span><strong>Multi-vital emergency</strong><small>Multiple abnormalities for the strongest class demo</small></button>
+      </div>
+    </article>
+
+    <article class="panel simulation-control-panel">
+      <div class="panel-heading"><div><span class="eyebrow">Step 3</span><h2>Configure & run</h2></div></div>
+      <div class="segmented-control" id="sim-intensity">
+        <button data-intensity="mild">Mild</button><button data-intensity="moderate" class="active">Moderate</button><button data-intensity="severe">Severe</button>
+      </div>
+      <label class="range-field">Duration <strong id="sim-duration-label">30 sec</strong><input id="sim-duration" type="range" min="15" max="60" step="5" value="30"></label>
+      <button class="primary-button large-action" id="sim-run-button">Run selected scenario</button>
+      <button class="secondary-button" id="sim-recovery-button">Return patient to normal</button>
+    </article>
+  </section>
+
+  <section class="simulation-live-column">
+    <article class="simulation-monitor panel">
+      <div class="monitor-topline">
+        <div><span class="eyebrow">Live patient stream</span><h2 id="sim-monitor-title">{{ selected_patient.name }}</h2></div>
+        <div class="monitor-scenario"><span>Current scenario</span><strong id="sim-current-scenario">{{ snapshot.scenario|replace('_',' ')|title }}</strong></div>
+      </div>
+      <div class="sim-vital-grid">
+        <div><span>Heart rate</span><strong id="sim-heart-rate">{{ snapshot.vitals.heart_rate }}</strong><small>BPM</small></div>
+        <div><span>SpO₂</span><strong id="sim-spo2">{{ snapshot.vitals.spo2 }}</strong><small>%</small></div>
+        <div><span>Temperature</span><strong id="sim-temperature">{{ snapshot.vitals.temperature }}</strong><small>°C</small></div>
+        <div><span>Blood pressure</span><strong id="sim-bp">{{ snapshot.vitals.systolic }}/{{ snapshot.vitals.diastolic }}</strong><small>mmHg</small></div>
+      </div>
+      <div class="simulation-chart-header"><div><span>Heart-rate trend</span><small>Live simulated signal</small></div><div class="risk-chip">Priority <strong id="sim-risk-score">{{ snapshot.decision.risk_score }}</strong>/100</div></div>
+      <div id="sim-heart-chart" class="live-line-chart simulation-line-chart" role="img" aria-label="Live simulated heart-rate trend"></div>
+    </article>
+
+    <div class="simulation-bottom-grid">
+      <article class="panel explanation-panel">
+        <div class="panel-heading"><div><span class="eyebrow">Agent reasoning</span><h2>Why this status?</h2></div><span class="decision-action" id="sim-decision-action">{{ snapshot.decision.action }}</span></div>
+        <ul class="reason-list" id="sim-reason-list">{% for reason in snapshot.decision.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+        <div class="neuron-view" id="sim-neuron"></div>
+        <div class="memory-row"><span>Five-check agent memory</span><div id="sim-memory-dots" class="memory-dots"></div><small>Every poll adds one check per vital (oldest drops off). Watch the dots turn amber — at 3 of 5 the vital becomes persistent and the status escalates one level.</small></div>
+      </article>
+
+      <article class="panel activity-panel">
+        <div class="panel-heading"><div><span class="eyebrow">Event trail</span><h2>What the system is doing</h2></div></div>
+        <div class="activity-feed sim-activity-feed" id="sim-activity-feed">{% for event in snapshot.activity %}<div class="activity-item"><time>{{ event.time }}</time><span>{{ event.source }}</span><p>{{ event.message }}</p></div>{% endfor %}</div>
+      </article>
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script>window.ElderGuard && ElderGuard.startSimulationPage({{ patients|tojson }});</script>{% endblock %}

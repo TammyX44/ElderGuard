@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Sign in · ElderGuard{% endblock %}
+{% block public_content %}
+<div class="login-page">
+  <section class="login-panel">
+    <div class="login-brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M2 12h4l2-5.5 3.5 11 2.5-8 1.5 2.5H22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><strong>ElderGuard</strong><small>Explainable Caregiver Monitoring</small></span></div>
+    <div class="login-copy">
+      <span class="eyebrow">Care, made visible</span>
+      <h1>One clear view of every elder in your care.</h1>
+      <p>ElderGuard watches simulated vitals, explains every decision it makes in plain language, and reaches you through desktop alerts and Telegram before small changes become emergencies.</p>
+    </div>
+    <div class="feature-line"><span>01</span><p>Live multi-patient monitoring</p></div>
+    <div class="feature-line"><span>02</span><p>Every alert comes with its reasoning</p></div>
+    <div class="feature-line"><span>03</span><p>Desktop and Telegram escalation</p></div>
+  </section>
+  <section class="login-card-wrap">
+    <form class="login-card" method="post">
+      <span class="eyebrow">Secure access</span>
+      <h2>Caretaker sign in</h2>
+      <p class="muted">Use the demo account to open the monitoring console.</p>
+      {% if error %}<div class="inline-alert danger">{{ error }}</div>{% endif %}
+      <label>Email<input name="email" type="email" value="{{ demo.email }}" required></label>
+      <label>Password<input name="password" type="password" value="{{ demo.password }}" required></label>
+      <button class="primary-button" type="submit">Open monitoring console</button>
+      <div class="demo-credentials"><span>Demo</span><code>{{ demo.email }}</code><code>{{ demo.password }}</code></div>
+      <p class="tiny muted">Demonstration system only. It does not provide medical diagnosis or emergency services.</p>
+    </form>
+  </section>
+</div>
+{% endblock %}

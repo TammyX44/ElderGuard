@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+
+# Runtime data (recreated automatically). telegram_settings.json holds the bot token.
+data/*.json
+data/*.tmp
+*.pptx

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Notifications · ElderGuard{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <span class="eyebrow">Caretaker settings</span>
+    <h1>Notification setup</h1>
+    <p>Connect Telegram from the browser, discover your chat ID, and send a test alert before class.</p>
+  </div>
+</header>
+
+<section class="settings-layout" id="telegram-settings-root" data-has-token="{{ 'true' if telegram.has_token else 'false' }}">
+  <article class="panel settings-panel">
+    <div class="panel-heading">
+      <div><span class="eyebrow">Telegram</span><h2>Connect caretaker bot</h2></div>
+      <span class="status-pill {{ 'status-normal' if telegram.configured else 'status-watch' }}" id="telegram-connection-badge">{{ 'CONNECTED' if telegram.configured else 'NOT CONNECTED' }}</span>
+    </div>
+
+    <div class="setup-steps">
+      <div class="setup-step"><span>1</span><div><strong>Create a bot with @BotFather</strong><small>Copy the token BotFather gives you.</small></div></div>
+      <div class="setup-step"><span>2</span><div><strong>Test the bot token</strong><small>ElderGuard will show the bot username and Telegram bot ID.</small></div></div>
+      <div class="setup-step"><span>3</span><div><strong>Message your bot</strong><small>Open Telegram, send <b>/start</b>, then click “Find my chat ID”.</small></div></div>
+      <div class="setup-step"><span>4</span><div><strong>Save and send a test alert</strong><small>The same channel is used for warning/critical patient alerts.</small></div></div>
+    </div>
+
+    <div class="settings-form-grid">
+      <label class="field-group">
+        <span>Bot token</span>
+        <input type="password" id="telegram-bot-token" placeholder="{{ telegram.bot_token if telegram.has_token else 'Paste BotFather token' }}" autocomplete="off">
+        <small>{{ 'A token is already saved. Leave blank to keep it.' if telegram.has_token else 'Stored only on this local Flask project.' }}</small>
+      </label>
+      <div class="field-action-row">
+        <button class="header-button secondary" type="button" id="telegram-test-bot">Test bot token</button>
+        <div class="inline-result" id="telegram-bot-result" aria-live="polite">Not tested yet</div>
+      </div>
+
+      <label class="field-group">
+        <span>Caretaker chat ID</span>
+        <input type="text" id="telegram-chat-id" value="{{ telegram.chat_id }}" placeholder="Click Find my chat ID" autocomplete="off">
+        <small>This identifies the Telegram chat that receives ElderGuard alerts.</small>
+      </label>
+      <div class="field-action-row">
+        <button class="header-button secondary" type="button" id="telegram-discover-chat">Find my chat ID</button>
+        <div class="inline-result" id="telegram-chat-result" aria-live="polite">Send /start to the bot first</div>
+      </div>
+    </div>
+
+    <div class="settings-actions">
+      <button class="header-button" type="button" id="telegram-save">Save Telegram setup</button>
+      <button class="header-button secondary" type="button" id="telegram-test-alert">Send test alert</button>
+    </div>
+    <div class="settings-message" id="telegram-settings-message" aria-live="polite"></div>
+  </article>
+
+  <aside class="panel settings-status-panel">
+    <span class="eyebrow">Connection check</span>
+    <h2>Presentation readiness</h2>
+    <div class="readiness-list">
+      <div><span>Bot token</span><strong id="ready-token">{{ 'Saved' if telegram.has_token else 'Missing' }}</strong></div>
+      <div><span>Chat ID</span><strong id="ready-chat">{{ telegram.chat_id if telegram.chat_id else 'Missing' }}</strong></div>
+      <div><span>Alert delivery</span><strong id="ready-delivery">{{ 'Ready' if telegram.configured else 'Setup needed' }}</strong></div>
+    </div>
+    <div class="tip-box">
+      <strong>Fast classroom test</strong>
+      <p>After setup, keep Telegram open on your phone and use the Simulation Lab to trigger a severe event. ElderGuard will create the browser incident and send the Telegram alert automatically.</p>
+    </div>
+  </aside>
+</section>
+
+<section class="section-block">
+  <article class="panel settings-panel">
+    <div class="panel-heading">
+      <div><span class="eyebrow">Access control</span><h2>Add caretaker account</h2></div>
+    </div>
+    <p class="muted tiny">Creates a new login for this console. Passwords are salted and hashed before saving - they are never stored in plain text.</p>
+    <div class="settings-form-grid">
+      <label class="field-group">
+        <span>Display name</span>
+        <input type="text" id="caretaker-name" placeholder="Ravi Sharma" autocomplete="off">
+      </label>
+      <div class="field-action-row"></div>
+      <label class="field-group">
+        <span>Email</span>
+        <input type="email" id="caretaker-email" placeholder="ravi@elderguard.local" autocomplete="off">
+      </label>
+      <div class="field-action-row"></div>
+      <label class="field-group">
+        <span>Password</span>
+        <input type="password" id="caretaker-password" placeholder="Minimum 6 characters" autocomplete="new-password">
+        <small>Share these details with the new caretaker - there is no password reset in this prototype.</small>
+      </label>
+      <div class="field-action-row">
+        <button class="header-button" type="button" id="caretaker-add">Create account</button>
+      </div>
+    </div>
+    <div class="settings-message" id="caretaker-message" aria-live="polite"></div>
+  </article>
+</section>
+{% endblock %}
+{% block scripts %}<script>window.ElderGuard && ElderGuard.startTelegramSettings(); ElderGuard.startCaretakerForm();</script>{% endblock %}

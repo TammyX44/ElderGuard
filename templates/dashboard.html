@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Caretaker · ElderGuard{% endblock %}
+{% block content %}
+<header class="page-header dashboard-hero">
+  <div>
+    <span class="eyebrow">Caretaker workspace</span>
+    <h1>{{ greeting }}, {{ caretaker }}.</h1>
+    <p>One screen for every assigned patient, live status, alert priority and escalation channels.</p>
+  </div>
+  <div class="header-actions">
+    <a class="header-button secondary" href="{{ url_for('alerts_page') }}">View incidents</a>
+  </div>
+</header>
+
+<section class="summary-row summary-row-four">
+  <div class="summary-card"><span>Patients monitored</span><strong id="patients-count">{{ patients|length }}</strong><small>Assigned to this caretaker</small></div>
+  <div class="summary-card"><span>Needs attention</span><strong id="attention-count">{{ attention_count }}</strong><small>Warning or critical</small></div>
+  <div class="summary-card"><span>Open incidents</span><strong id="open-incidents-count">{{ alerts|selectattr('acknowledged','equalto',false)|list|length }}</strong><small>Awaiting acknowledgement</small></div>
+  <div class="summary-card channel-summary"><span>Notification delivery</span><strong class="small-value">Web + Telegram</strong><small id="telegram-summary-state">{{ 'Telegram connected' if telegram_enabled else 'Telegram setup required' }}</small></div>
+</section>
+
+<section class="section-block">
+  <div class="section-heading">
+    <div><span class="eyebrow">Caretaking performance</span><h2>Metrics</h2></div>
+    <span class="muted tiny">Computed live from incident history</span>
+  </div>
+  <div class="metric-grid">
+    <div class="summary-card"><span>Alerts today</span><strong id="metrics-today">{{ metrics.today }}</strong><small>{{ metrics.total }} incidents on record</small></div>
+    <div class="summary-card"><span>Critical incidents</span><strong id="metrics-critical">{{ metrics.critical }}</strong><small>All time</small></div>
+    <div class="summary-card"><span>Acknowledgement rate</span><strong id="metrics-ack-rate">{{ metrics.ack_rate }}%</strong><small>{{ metrics.open }} still open</small></div>
+    <div class="summary-card"><span>Mean time to acknowledge</span><strong class="small-value" id="metrics-avg-ack">{{ metrics.avg_ack }}</strong><small>Alert created → caretaker responds</small></div>
+  </div>
+</section>
+
+<section class="section-block">
+  <div class="section-heading">
+    <div><span class="eyebrow">Assigned patients</span><h2>Live patient board</h2></div>
+    <div class="board-legend"><span><i class="legend-dot normal"></i>Normal</span><span><i class="legend-dot watch"></i>Watch</span><span><i class="legend-dot warning"></i>Warning</span><span><i class="legend-dot critical"></i>Critical</span></div>
+  </div>
+  <div class="patient-grid" id="patient-grid">
+    {% for patient_id, patient in patients.items() %}
+    {% set s = snapshots[patient_id] %}
+    <a class="patient-card" href="{{ url_for('patient_detail', patient_id=patient_id) }}" data-dashboard-patient="{{ patient_id }}">
+      <div class="patient-card-accent status-bg-{{ s.decision.status|lower }}" data-role="accent"></div>
+      <div class="patient-card-top">
+        <div><span class="patient-id">{{ patient_id }}</span><h3>{{ patient.name }}</h3><p>{{ patient.age }} yrs · {{ patient.room }}</p></div>
+        <span class="status-pill status-{{ s.decision.status|lower }}" data-role="status">{{ s.decision.status }}</span>
+      </div>
+      <div class="mini-vitals">
+        <div><span>Heart rate</span><strong data-role="heart_rate">{{ s.vitals.heart_rate }}</strong><small>BPM</small></div>
+        <div><span>SpO₂</span><strong data-role="spo2">{{ s.vitals.spo2 }}</strong><small>%</small></div>
+        <div><span>Temp</span><strong data-role="temperature">{{ s.vitals.temperature }}</strong><small>°C</small></div>
+        <div><span>BP</span><strong data-role="bp">{{ s.vitals.systolic }}/{{ s.vitals.diastolic }}</strong><small>mmHg</small></div>
+      </div>
+      <div class="risk-line"><span>Priority</span><div class="risk-bar"><i data-role="risk-bar" style="width: {{ s.decision.risk_score }}%"></i></div><strong data-role="risk-score">{{ s.decision.risk_score }}</strong></div>
+      <div class="patient-card-footer"><span>Updated <strong data-role="updated-at">{{ s.updated_at }}</strong></span><strong>Open record →</strong></div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="dashboard-lower-grid">
+  <article class="panel channel-panel">
+    <div class="panel-heading"><div><span class="eyebrow">Escalation</span><h2>Alert delivery</h2></div></div>
+    <div class="delivery-route">
+      <div class="delivery-step"><span>01</span><div><strong>Agent detects abnormality</strong><small>Binary threshold + short-term memory</small></div></div>
+      <i></i>
+      <div class="delivery-step"><span>02</span><div><strong>Browser alert appears</strong><small>Desktop notification + in-app toast</small></div></div>
+      <i></i>
+      <div class="delivery-step"><span>03</span><div><strong>Telegram reaches caretaker</strong><small>{{ 'Configured and ready' if telegram_enabled else 'Add bot token + chat ID to enable' }}</small></div></div>
+    </div>
+  </article>
+
+  <article class="panel recent-panel">
+    <div class="panel-heading"><div><span class="eyebrow">Recent activity</span><h2>Latest incidents</h2></div><a class="text-link" href="{{ url_for('alerts_page') }}">View all</a></div>
+    <div class="compact-incidents" id="dashboard-recent-incidents">
+      {% if alerts %}
+        {% for alert in alerts %}
+        <div class="compact-incident">
+          <span class="incident-marker status-bg-{{ alert.status|lower }}"></span>
+          <div><strong>{{ alert.patient_name }}</strong><small>{{ alert.reasons[0] if alert.reasons else alert.action }}</small></div>
+          <span class="status-pill status-{{ alert.status|lower }}">{{ alert.status }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">No incidents recorded yet.</div>
+      {% endif %}
+    </div>
+  </article>
+</section>
+{% endblock %}
+{% block scripts %}<script>window.ElderGuard && ElderGuard.startDashboardPolling();</script>{% endblock %}

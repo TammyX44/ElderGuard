@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Incidents · ElderGuard{% endblock %}
+{% block content %}
+<header class="page-header"><div><span class="eyebrow">Incident centre</span><h1>Alert history</h1><p>Every warning and critical event is recorded with its reasoning and caretaker acknowledgement state.</p></div></header>
+<section class="section-block">
+  <div class="alert-table-wrap">
+    <table class="alert-table">
+      <thead><tr><th>Status</th><th>Patient</th><th>Reason</th><th>Vitals</th><th>Time</th><th>Acknowledgement</th></tr></thead>
+      <tbody>
+      {% for alert in alerts %}
+      <tr id="alert-row-{{ alert.id }}">
+        <td><span class="status-pill status-{{ alert.status|lower }}">{{ alert.status }}</span></td>
+        <td><strong>{{ alert.patient_name }}</strong><small>{{ alert.patient_id }}</small></td>
+        <td><p>{{ alert.reasons[0] if alert.reasons else alert.action }}</p><small>Priority {{ alert.risk_score }}/100</small></td>
+        <td><code>{{ alert.vitals.heart_rate }} BPM · {{ alert.vitals.spo2 }}% · {{ alert.vitals.systolic }}/{{ alert.vitals.diastolic }}</code></td>
+        <td><small>{{ alert.created_at }}</small></td>
+        <td>
+          {% if alert.acknowledged %}<span class="acknowledged">✓ {{ alert.acknowledged_by }}<small>{{ alert.acknowledged_at }}</small></span>
+          {% else %}<button class="ack-button" data-alert-id="{{ alert.id }}">Acknowledge</button>{% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6"><div class="empty-state">No alerts recorded yet.</div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script>window.ElderGuard && ElderGuard.bindAcknowledgements();</script>{% endblock %}

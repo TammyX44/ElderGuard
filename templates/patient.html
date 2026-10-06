@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ patient.name }} · ElderGuard{% endblock %}
+{% block content %}
+<header class="page-header patient-header">
+  <div>
+    <a class="back-link" href="{{ url_for('dashboard') }}">← Back to caretaker panel</a>
+    <span class="eyebrow">{{ patient.id }} · {{ patient.room }}</span>
+    <h1>{{ patient.name }}</h1>
+    <p>{{ patient.age }} years · Live simulated monitoring</p>
+  </div>
+  <div class="patient-status-large"><span class="status-pill status-{{ snapshot.decision.status|lower }}" id="overall-status">{{ snapshot.decision.status }}</span><small>Priority <strong id="risk-score">{{ snapshot.decision.risk_score }}</strong>/100</small></div>
+</header>
+
+<div class="patient-layout" data-patient-id="{{ patient.id }}">
+  <section class="patient-main">
+    <div class="vital-grid">
+      <article class="vital-card"><div><span>HEART RATE</span><strong id="heart-rate">{{ snapshot.vitals.heart_rate }}</strong><small>BPM</small></div><span class="mini-status" id="heart-status">{{ snapshot.decision.vital_results.heart_rate.status }}</span></article>
+      <article class="vital-card"><div><span>OXYGEN SATURATION</span><strong id="spo2">{{ snapshot.vitals.spo2 }}</strong><small>%</small></div><span class="mini-status" id="spo2-status">{{ snapshot.decision.vital_results.spo2.status }}</span></article>
+      <article class="vital-card"><div><span>TEMPERATURE</span><strong id="temperature">{{ snapshot.vitals.temperature }}</strong><small>°C</small></div><span class="mini-status" id="temperature-status">{{ snapshot.decision.vital_results.temperature.status }}</span></article>
+      <article class="vital-card"><div><span>BLOOD PRESSURE</span><strong id="blood-pressure">{{ snapshot.vitals.systolic }}/{{ snapshot.vitals.diastolic }}</strong><small>mmHg</small></div><span class="mini-status" id="bp-status">{{ snapshot.decision.vital_results.blood_pressure.status }}</span></article>
+    </div>
+
+    <article class="panel chart-panel">
+      <div class="panel-heading"><div><span class="eyebrow">Live signal</span><h2>Heart-rate trend</h2></div><span class="muted small">Last 40 samples</span></div>
+      <div id="heart-chart" class="live-line-chart" role="img" aria-label="Live heart-rate trend"></div>
+    </article>
+
+    <div class="two-column-panels">
+      <article class="panel explanation-panel">
+        <div class="panel-heading"><div><span class="eyebrow">Explainable decision</span><h2>Why this status?</h2></div><span class="decision-action" id="decision-action">{{ snapshot.decision.action }}</span></div>
+        <ul class="reason-list" id="reason-list">{% for reason in snapshot.decision.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+        <div class="neuron-view" id="patient-neuron"></div>
+        <div class="memory-row"><span>5-check memory</span><div id="memory-dots" class="memory-dots"></div><small>Every poll adds one check per vital (oldest drops off). Watch the dots turn amber — at 3 of 5 the vital becomes persistent and the status escalates one level.</small></div>
+      </article>
+
+      <article class="panel activity-panel">
+        <div class="panel-heading"><div><span class="eyebrow">Decision trail</span><h2>System activity</h2></div></div>
+        <div class="activity-feed" id="activity-feed">{% for event in snapshot.activity %}<div class="activity-item"><time>{{ event.time }}</time><span>{{ event.source }}</span><p>{{ event.message }}</p></div>{% endfor %}</div>
+      </article>
+    </div>
+  </section>
+
+  <aside class="patient-side">
+
+    <article class="panel threshold-panel">
+      <span class="eyebrow">Transparency</span><h2>Demo thresholds</h2>
+      <p class="muted tiny">Configured for simulation only; these are not clinical diagnostic limits.</p>
+      <div class="threshold-row"><span>Heart rate</span><strong>{{ thresholds.heart_rate.normal[0] }}–{{ thresholds.heart_rate.normal[1] }} BPM</strong></div>
+      <div class="threshold-row"><span>SpO₂</span><strong>≥ {{ thresholds.spo2.normal_min }}%</strong></div>
+      <div class="threshold-row"><span>Temperature</span><strong>{{ thresholds.temperature.normal[0] }}–{{ thresholds.temperature.normal[1] }}°C</strong></div>
+      <div class="threshold-row"><span>Systolic BP</span><strong>{{ thresholds.systolic.normal[0] }}–{{ thresholds.systolic.normal[1] }}</strong></div>
+    </article>
+
+    <article class="panel incident-mini-panel">
+      <div class="panel-heading"><div><span class="eyebrow">Patient incidents</span><h2>Recent alerts</h2></div></div>
+      {% if alerts %}
+        {% for alert in alerts %}<div class="mini-incident"><span class="status-pill status-{{ alert.status|lower }}">{{ alert.status }}</span><div><strong>{{ alert.vitals.heart_rate }} BPM · {{ alert.vitals.spo2 }}%</strong><small>{{ alert.created_at }}</small></div></div>{% endfor %}
+      {% else %}<p class="muted tiny">No recorded incidents for this patient.</p>{% endif %}
+    </article>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}<script>window.ElderGuard && ElderGuard.startPatientPage();</script>{% endblock %}

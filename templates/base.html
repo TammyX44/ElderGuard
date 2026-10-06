@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ElderGuard — explainable AI-assisted elderly monitoring and caregiver alert system.">
+  <meta name="theme-color" content="#14251e">
+  <title>{% block title %}ElderGuard{% endblock %}</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2320513f'/%3E%3Cpath d='M5 16h6l2.5-7 4 14 3-10 1.8 3H27' stroke='%23dff0e2' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,450;9..144,550;9..144,650&family=Outfit:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script>
+    (function () {
+      var saved = localStorage.getItem("elderguardTheme");
+      var dark = saved ? saved === "dark" : (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      if (dark) document.documentElement.setAttribute("data-theme", "dark");
+    })();
+  </script>
+</head>
+<body data-authenticated="{{ 'true' if session.get('caretaker') else 'false' }}">
+  {% if session.get('caretaker') %}
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="{{ url_for('dashboard') }}">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M2 12h4l2-5.5 3.5 11 2.5-8 1.5 2.5H22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span><strong>ElderGuard</strong><small>Caregiver Console</small></span>
+      </a>
+
+      <div class="nav-label">Workspace</div>
+      <nav>
+        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}"><span class="nav-dot"></span>Caretaker</a>
+        <a class="nav-link {% if request.endpoint == 'alerts_page' %}active{% endif %}" href="{{ url_for('alerts_page') }}"><span class="nav-dot"></span>Incidents</a>
+        <a class="nav-link {% if request.endpoint == 'notification_settings_page' %}active{% endif %}" href="{{ url_for('notification_settings_page') }}"><span class="nav-dot"></span>Notifications</a>
+      </nav>
+
+      <div class="sidebar-channel-card">
+        <span class="eyebrow">Alert channels</span>
+        <div class="channel-line"><span>Web console</span><strong class="channel-online">ON</strong></div>
+        <div class="channel-line"><span>Telegram</span><strong id="sidebar-telegram-state" class="{{ 'channel-online' if telegram_enabled|default(false) else 'channel-offline' }}">{{ 'READY' if telegram_enabled|default(false) else 'SETUP' }}</strong></div>
+        <a class="sidebar-settings-link" href="{{ url_for('notification_settings_page') }}">Configure Telegram →</a>
+        <button type="button" class="notification-button" id="browser-notification-button">Enable desktop alerts</button>
+        <small id="browser-notification-state">Browser permission not requested</small>
+      </div>
+
+      <div class="sidebar-foot">
+        <div class="caregiver-pill">
+          <span class="avatar">DC</span>
+          <span><strong>{{ session.get('caretaker') }}</strong><small>Caretaker</small></span>
+        </div>
+        <button type="button" class="theme-toggle" id="theme-toggle">Dark mode</button>
+        <a class="text-link" href="{{ url_for('logout') }}">Sign out</a>
+      </div>
+    </aside>
+    <main class="main-content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  <div id="toast-stack" class="toast-stack" aria-live="polite"></div>
+  {% else %}
+    {% block public_content %}{% endblock %}
+  {% endif %}
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+  {% if session.get('caretaker') %}<script>window.ElderGuard && ElderGuard.initGlobalAlerts();</script>{% endif %}
+  {% block scripts %}{% endblock %}
+</body>
+</html>
